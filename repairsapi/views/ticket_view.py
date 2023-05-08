@@ -71,7 +71,7 @@ class TicketView(ViewSet):
         return Response(serialized.data, status=status.HTTP_200_OK)
 
     def update(self, request, pk=None):
-        """Hand PUT requserts for single customer
+        """Hand PUT requests for single customer
 
         Returns:
             Response -- No repsonse body. Just 204 status cod.
