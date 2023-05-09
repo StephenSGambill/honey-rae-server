@@ -4,6 +4,7 @@ from rest_framework.viewsets import ViewSet
 from rest_framework.response import Response
 from rest_framework import serializers, status
 from repairsapi.models import ServiceTicket, Employee, Customer
+from django.db.models import Q
 
 
 class TicketView(ViewSet):
@@ -51,6 +52,20 @@ class TicketView(ViewSet):
                         date_completed__isnull=False
                     )
 
+                elif request.query_params["status"] == "all":
+                    service_tickets = ServiceTicket.objects.all()
+                elif request.query_params["status"] == "unclaimed":
+                    service_tickets = service_tickets.filter(employee__isnull=True)
+                elif request.query_params["status"] == "inprogress":
+                    service_tickets = service_tickets.filter(
+                        employee__isnull=False, date_completed__isnull=True
+                    )
+            elif "description" in request.query_params:
+                print("hit")
+                service_tickets = service_tickets.filter(
+                    description__contains=request.query_params["description"]
+                )
+
         else:
             service_tickets = ServiceTicket.objects.filter(
                 customer__user=request.auth.user
@@ -74,7 +89,7 @@ class TicketView(ViewSet):
         """Hand PUT requests for single customer
 
         Returns:
-            Response -- No repsonse body. Just 204 status cod.
+            Response -- No response body. Just 204 status cod.
         """
         # Select the targeted ticket using pk
         ticket = ServiceTicket.objects.get(pk=pk)
@@ -87,6 +102,8 @@ class TicketView(ViewSet):
 
         # Assign that Employee instance to the employee property of the ticket
         ticket.employee = assigned_employee
+
+        ticket.date_completed = request.data["date_completed"]
 
         # Save the updated ticket
         ticket.save()
